@@ -45,7 +45,7 @@ export default class CatchTheCatGame extends Phaser.Game {
 
     constructor(config: CatchTheCatGameConfig) {
         if (!config.credit) {
-            config.credit = "github.com/ganlvtech";
+            config.credit = "";
         }
         if (!config.backgroundColor) {
             config.backgroundColor = 0xeeeeee;

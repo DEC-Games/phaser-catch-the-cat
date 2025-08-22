@@ -102,10 +102,10 @@ export default class MainScene extends Phaser.Scene {
             case GameState.PLAYING:
                 break;
             case GameState.LOSE:
-                this.setStatusText(_("猫已经跑到地图边缘了，你输了"));
+                this.setStatusText(_("The cat has run to the edge of the map, you lose."));
                 break;
             case GameState.WIN:
-                this.setStatusText(_("猫已经无路可走，你赢了"));
+                this.setStatusText(_("The cat has nowhere to go, you win."));
                 break;
             default:
                 return;
@@ -181,26 +181,26 @@ export default class MainScene extends Phaser.Scene {
             this.cat.anims.stop();
         }
         if (this.state !== GameState.PLAYING) {
-            this.setStatusText(_("游戏已经结束，重新开局"));
+            this.setStatusText(_("The game is over, let's start over."));
             this.reset();
             return false;
         }
         let block = this.getBlock(i, j);
         if (!block) {
-            this.setStatusText(_("代码错误，当前位置不存在"));
+            this.setStatusText(_("Code error, current location does not exist."));
             return false;
         }
         if (block.isWall) {
-            this.setStatusText(_("点击位置已经是墙了，禁止点击"));
+            this.setStatusText(_("The click position is already a wall, click is prohibited."));
             return false;
         }
         if (this.cat.i === i && this.cat.j === j) {
-            this.setStatusText(_("点击位置是猫当前位置，禁止点击"));
+            this.setStatusText(_("The click position is the cat's current position, click is prohibited."));
             return false;
         }
         block.isWall = true;
         if (this.cat.isCaught()) {
-            this.setStatusText(_("猫已经无路可走，你赢了"));
+            this.setStatusText(_("The cat has nowhere to go, you win."));
             this.state = GameState.WIN;
             return false;
         }
@@ -208,10 +208,10 @@ export default class MainScene extends Phaser.Scene {
         this.recordCoord.cat.push({i: this.cat.i, j:this.cat.j});
         this.recordCoord.wall.push({i, j});
 
-        this.setStatusText(_("您点击了 ") + `(${i}, ${j})`);
+        this.setStatusText(_("You clicked ") + `(${i}, ${j})`);
         let result = this.cat.step();
         if (!result) {
-            this.setStatusText(_("猫认输，你赢了！"));
+            this.setStatusText(_("The cat admits defeat, you win!"));
             this.state = GameState.WIN;
         }
         return true;
@@ -227,13 +227,13 @@ export default class MainScene extends Phaser.Scene {
             wall: []
         };
         this.state = GameState.PLAYING;
-        this.setStatusText(_("点击小圆点，围住小猫"));
+        this.setStatusText(_("Click on the small dots to surround the kitten."));
     }
 
     undo() {
         if (this.recordCoord.cat.length) {
             if (this.state !== GameState.PLAYING) {
-                this.setStatusText(_("游戏已经结束，重新开局"));
+                this.setStatusText(_("The game is over, let's start over."));
                 this.reset();
             } else {
                 const catCoord = this.recordCoord.cat.pop();
@@ -243,7 +243,7 @@ export default class MainScene extends Phaser.Scene {
                 this.getBlock(i, j).isWall = false;
             }
         } else {
-            this.setStatusText(_("无路可退！！！"));
+            this.setStatusText(_("There is no way back!!!"));
         }
     }
     private setStatusText(message: string) {

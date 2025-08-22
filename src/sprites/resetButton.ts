@@ -3,7 +3,7 @@ import _ from "../i18n";
 
 export default class ResetButton extends Phaser.GameObjects.Text {
     constructor(scene: MainScene) {
-        super(scene, 0, 0, _("重置"), {});
+        super(scene, 0, 0, _("Reset"), {});
         this.setColor("#000000");
         let r = scene.r;
         this.setFontSize(r);
