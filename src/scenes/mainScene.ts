@@ -37,6 +37,9 @@ export default class MainScene extends Phaser.Scene {
     public readonly dy: number;
     public game: CatchTheCatGame;
     private recordCoord: RecordCoord;
+    startTime: Date;
+    timeText: Phaser.GameObjects.Text;
+    isGameOver: boolean = false;
 
     constructor(w: number, h: number, r: number, initialWallCount: number) {
         super({
@@ -156,11 +159,64 @@ export default class MainScene extends Phaser.Scene {
         this.createResetButton();
         this.createUndoButton();
         this.createCreditText();
-        this.reset();
         if (this.game.solver) {
             this.cat.solver = this.game.solver;
         }
+        // Add these lines for the timer
+        // --- Add this block to the top of the create() method ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const name = urlParams.get('name');
+        const email = urlParams.get('email');
+
+        // If the parameters exist in the URL, store them
+        if (name) {
+            localStorage.setItem('userName', name);
+        }
+        if (email) {
+            localStorage.setItem('userEmail', email);
+        }
+        // --- End of new block ---
+        this.isGameOver = false;
+        this.startTime = new Date();
+        const { width, height } = this.cameras.main;
+        this.timeText = this.add.text(width - 10, height - 10, 'Time: 0s', { 
+            fontSize: '16px', 
+            color: '#ffffff',
+            backgroundColor: '#000000' 
+        });
+        this.timeText.setOrigin(1, 1);
+        this.reset();
     }
+
+    update() {
+        // Add these lines to update the timer text
+        if (!this.isGameOver) {
+            const elapsed = Math.floor((new Date().getTime() - this.startTime.getTime()) / 1000);
+            this.timeText.setText('Time: ' + elapsed + 's');
+        }
+        // ... rest of the update() method might be here
+    }
+
+    // gameOver(win: boolean) {
+    //     // Stop the timer and calculate final score
+    //     const finalTime = Math.floor((new Date().getTime() - this.startTime.getTime()) / 1000);
+
+    //     if (win) {
+    //         // Ask player to submit score
+    //         const submit = confirm(`You won in ${finalTime} seconds! 🏆\n\nDo you want to submit your score?`);
+    //         if (submit) {
+    //         alert(`Score of ${finalTime}s submitted!`);
+    //         // In a real game, you would send the score to a server here.
+    //         // e.g., fetch('https://your-api.com/submit', { method: 'POST', body: JSON.stringify({ score: finalTime }) });
+    //         }
+    //     } else {
+    //         alert(`The cat escaped after ${finalTime} seconds! 😿`);
+    //     }
+
+    //     // Restart the game
+    //     this.scene.restart();
+    // }
+
 
     getPosition(i: number, j: number): NeighbourData {
         return {
@@ -212,6 +268,67 @@ export default class MainScene extends Phaser.Scene {
         let result = this.cat.step();
         if (!result) {
             this.setStatusText(_("The cat admits defeat, you win!"));
+            this.isGameOver = true;
+            
+            const finalTime = Math.floor((new Date().getTime() - this.startTime.getTime()) / 1000);
+            const submit = confirm(`You won in ${finalTime} seconds! 🏆\n\nDo you want to submit your score?`);
+            // Get the stored best score, or null if it doesn't exist
+            const bestScore = localStorage.getItem('catchTheCatBestScore');
+            // Check if the current time is better than the best score
+            if (bestScore === null || finalTime < parseInt(bestScore, 10)) {
+                localStorage.setItem('catchTheCatBestScore', finalTime.toString());
+                console.log(`New best score: ${finalTime}s`);
+                // Dispatch an event to notify the HTML page
+                window.dispatchEvent(new CustomEvent('bestScoreUpdated'));
+            }
+            if (submit) {
+                // Retrieve user info from storage
+                const savedName = localStorage.getItem('userName') || 'Anonymous';
+                const savedEmail = localStorage.getItem('userEmail') || 'No Email';
+                const functionUrl = 'https://submitcatgameform-gksuylu43a-uc.a.run.app';
+                // Prepare the data payload
+                const scoreData = {
+                    name: savedName,
+                    email: savedEmail,
+                    score: finalTime,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Start the fetch request
+                fetch(functionUrl, {
+                    method: 'POST',
+                    headers: {
+                    'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(scoreData),
+                })
+                .then(response => {
+                    // This first .then() checks if the server responded successfully
+                    if (response.ok) {
+                    // If the response is good (status 200-299), we can parse the JSON
+                    return response.json();
+                    } else {
+                    // If the server responded with an error, we create our own error
+                    // to be handled by the .catch() block
+                    return response.text().then(text => { throw new Error(text) });
+                    }
+                })
+                .then(result => {
+                    // This second .then() runs only if the response was successful
+                    console.log('Success:', result);
+                    console.log('Submitting score:', scoreData);
+                    alert(`Score of ${finalTime}s submitted!`);
+                })
+                .catch(error => {
+                    // The .catch() block will handle any network errors or errors we threw
+                    console.error('Submission failed:', error);
+                    alert(`Submission failed: ${error.message}`);
+                });
+                
+                
+            // In a real game, you would send the score to a server here.  https://submitcatgameform-gksuylu43a-uc.a.run.app 
+            // e.g., fetch('https://your-api.com/submit', { method: 'POST', body: JSON.stringify({ score: finalTime }) });
+            }
             this.state = GameState.WIN;
         }
         return true;
@@ -221,7 +338,8 @@ export default class MainScene extends Phaser.Scene {
         this.cat.reset();
         this.resetBlocks();
         this.randomWall();
-
+        this.startTime = new Date();
+        this.isGameOver = false;
         this.recordCoord = {
             cat: [],
             wall: []
