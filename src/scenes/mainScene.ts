@@ -285,12 +285,14 @@ export default class MainScene extends Phaser.Scene {
                 // Retrieve user info from storage
                 const savedName = localStorage.getItem('userName') || 'Anonymous';
                 const savedEmail = localStorage.getItem('userEmail') || 'No Email';
+                const bestScore2 = localStorage.getItem('catchTheCatBestScore');
                 const functionUrl = 'https://submitcatgameform-gksuylu43a-uc.a.run.app';
                 // Prepare the data payload
                 const scoreData = {
                     name: savedName,
                     email: savedEmail,
                     score: finalTime,
+                    bestScore: bestScore2,
                     timestamp: new Date().toISOString()
                 };
                 
